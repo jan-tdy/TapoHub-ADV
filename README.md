@@ -66,12 +66,20 @@ been merged upstream. Practical consequences:
 
 ## Installation (HACS)
 
-1. HACS → Integrations → ⋮ → Custom repositories → add this repository URL,
-   category "Integration".
-2. Install "Tapo Hub (H100)", restart Home Assistant.
-3. Settings → Devices & services → Add integration → "Tapo Hub".
-4. Enter the hub's IP address (or leave blank to search the local network)
-   and your TP-Link account email/password.
+1. In Home Assistant, open **HACS** in the sidebar.
+2. Click the **⋮** (three-dot) menu in the top-right corner → **Custom repositories**.
+3. Add:
+   - **Repository:** `https://github.com/jan-tdy/TapoHub-ADV`
+   - **Type:** Integration
+   - Click **Add**.
+4. Close the dialog, then search HACS for **"Tapo Hub (H100)"** and open it.
+5. Click **Download**, confirm the version, and click **Download** again.
+6. Restart Home Assistant (Settings → System → Restart, or use the restart
+   prompt HACS shows you).
+7. Go to **Settings → Devices & services → + Add integration**, search for
+   **"Tapo Hub"**, and select it.
+8. Enter the hub's IP address (or leave it blank to search the local
+   network) and your TP-Link account email/password.
 
 ## Configuration
 
