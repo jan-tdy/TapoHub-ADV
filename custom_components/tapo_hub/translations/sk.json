@@ -1,0 +1,56 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Pripojenie k Tapo Hubu",
+        "description": "Zadajte IP adresu hubu, alebo pole nechajte prázdne pre vyhľadanie v lokálnej sieti. Na lokálnu autentifikáciu sú potrebné prihlasovacie údaje TP-Link/Tapo účtu.",
+        "data": {
+          "host": "Host (IP adresa, voliteľné)",
+          "username": "E-mail TP-Link účtu",
+          "password": "Heslo TP-Link účtu"
+        }
+      },
+      "pick_device": {
+        "title": "Vyberte nájdený hub",
+        "data": {
+          "host": "Hub"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Opätovná autentifikácia s Tapo Hubom",
+        "description": "Uložené prihlasovacie údaje už nefungujú. Zadajte znova e-mail a heslo TP-Link účtu.",
+        "data": {
+          "username": "E-mail TP-Link účtu",
+          "password": "Heslo TP-Link účtu"
+        }
+      },
+      "reconfigure": {
+        "title": "Zmena adresy hubu",
+        "data": {
+          "host": "Host (IP adresa)"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Neplatné prihlasovacie údaje TP-Link účtu.",
+      "cannot_connect": "Nepodarilo sa pripojiť k hubu. Skontrolujte IP adresu a pripojenie k sieti.",
+      "not_a_hub": "Zariadenie na tejto adrese nie je Tapo hub.",
+      "unexpected_device": "Zariadenie nájdené na tejto adrese nezodpovedá nakonfigurovanému hubu."
+    },
+    "abort": {
+      "already_configured": "Tento hub je už nakonfigurovaný.",
+      "no_devices_found": "V sieti sa nenašiel žiadny Tapo hub.",
+      "reauth_successful": "Opätovná autentifikácia bola úspešná."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Nastavenia Tapo Hub",
+        "data": {
+          "scan_interval": "Interval aktualizácie (sekundy)"
+        }
+      }
+    }
+  }
+}
