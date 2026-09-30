@@ -1,0 +1,56 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to your Tapo Hub",
+        "description": "Enter the hub's IP address, or leave it blank to search the local network. TP-Link/Tapo account credentials are required to authenticate locally.",
+        "data": {
+          "host": "Host (IP address, optional)",
+          "username": "TP-Link account email",
+          "password": "TP-Link account password"
+        }
+      },
+      "pick_device": {
+        "title": "Select the discovered hub",
+        "data": {
+          "host": "Hub"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Re-authenticate with Tapo Hub",
+        "description": "The stored credentials no longer work. Enter your TP-Link account email and password again.",
+        "data": {
+          "username": "TP-Link account email",
+          "password": "TP-Link account password"
+        }
+      },
+      "reconfigure": {
+        "title": "Update the hub's address",
+        "data": {
+          "host": "Host (IP address)"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid TP-Link account credentials.",
+      "cannot_connect": "Could not connect to the hub. Check the IP address and network connection.",
+      "not_a_hub": "The device at this address is not a Tapo hub.",
+      "unexpected_device": "The device found at this address does not match the configured hub."
+    },
+    "abort": {
+      "already_configured": "This hub is already configured.",
+      "no_devices_found": "No Tapo hubs were found on the network.",
+      "reauth_successful": "Re-authentication was successful."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Tapo Hub options",
+        "data": {
+          "scan_interval": "Polling interval (seconds)"
+        }
+      }
+    }
+  }
+}
