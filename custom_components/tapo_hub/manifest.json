@@ -3,13 +3,13 @@
   "name": "Tapo Hub (H100)",
   "codeowners": ["@jan-tdy"],
   "config_flow": true,
-  "documentation": "https://github.com/jan-tdy/tapo_hub",
-  "issue_tracker": "https://github.com/jan-tdy/tapo_hub/issues",
+  "documentation": "https://github.com/jan-tdy/TapoHub-ADV",
   "integration_type": "hub",
   "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/jan-tdy/TapoHub-ADV/issues",
   "loggers": ["kasa"],
   "requirements": [
-    "python-kasa @ git+https://github.com/ZeliardM/python-kasa.git@e7084472972f08f2e2235b342f3964aedbfaeb3b",
+    "python-kasa@git+https://github.com/ZeliardM/python-kasa.git@e7084472972f08f2e2235b342f3964aedbfaeb3b",
     "voluptuous>=0.13.1"
   ],
   "version": "0.1.0"
