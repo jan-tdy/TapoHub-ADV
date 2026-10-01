@@ -66,6 +66,38 @@ been merged upstream. Practical consequences:
   see [MIGRATION.md](MIGRATION.md) for how to do that without losing your
   entity history.
 
+### ⚠️ This silently replaces `python-kasa` for *all* of Home Assistant
+
+Home Assistant installs every custom integration's `requirements` into the
+**same shared Python environment** used by core itself — there is no
+per-integration isolation. The pinned fork above reports its own version as
+`0.10.2`, identical to the official `python-kasa[speedups]==0.10.2` pin used
+by the built-in `tplink` integration (and by other integrations that depend
+on `python-kasa`, e.g. Tapo vacuum support). Because the version numbers
+match, Home Assistant treats the requirement as already satisfied and will
+**not** reinstall the official PyPI release afterwards.
+
+In practice this means: once this integration has been installed and Home
+Assistant restarted, **every other integration that imports `kasa` now runs
+on this unofficial fork too** — not just this one. Several users have
+reported that the official `tplink` integration (and Tapo vacuum support)
+starts working with TPAP devices after installing this integration and
+restarting, purely as a side effect of this shared-dependency override.
+
+This cuts both ways:
+
+- If you only wanted your H100 working with the *official* integration, you
+  may not need this integration's entities at all once the fork is
+  installed — you can set it up as a HACS integration, confirm the official
+  `tplink` integration now works, and then remove this one again (though
+  removing it does **not** automatically restore the official `python-kasa`
+  release; the fork stays installed until something else forces a
+  reinstall).
+- It also means this integration's "unreleased third-party dependency" risk
+  (see above) now applies to every HA integration using `python-kasa`, not
+  just this one — if the fork breaks something, it can affect devices this
+  integration never touches.
+
 ## Installation (HACS)
 
 1. In Home Assistant, open **HACS** in the sidebar.
@@ -143,6 +175,9 @@ This integration depends on an **unreleased, third-party branch** of
 `python-kasa` (`feature/tpap` by ZeliardM, based on python-kasa PR #1592).
 The author of this integration does not control that code and gives no
 guarantee about its correctness, security, or continued availability.
+**Installing this integration replaces `python-kasa` system-wide in your
+Home Assistant instance** (see the warning above) — this affects every
+integration using that library, not just this one.
 
 This integration operates on your **local network only**. You are
 responsible for your own credentials, your network's security, and
@@ -166,6 +201,9 @@ Táto integrácia závisí od **nevydanej vetvy tretej strany** knižnice
 `python-kasa` (`feature/tpap` od ZeliardM, založenej na python-kasa PR
 #1592). Autor tejto integrácie tento kód nekontroluje a neposkytuje žiadnu
 záruku ohľadom jeho správnosti, bezpečnosti ani ďalšej dostupnosti.
+**Inštalácia tejto integrácie nahradí `python-kasa` v celej inštancii Home
+Assistant** (pozri varovanie vyššie) — týka sa to každej integrácie, ktorá
+túto knižnicu používa, nielen tejto.
 
 Táto integrácia funguje výlučne v **lokálnej sieti**. Za svoje prihlasovacie
 údaje, bezpečnosť svojej siete a dodržiavanie zmluvných podmienok TP-Link
