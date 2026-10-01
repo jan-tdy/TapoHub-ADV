@@ -4,6 +4,8 @@ A [HACS](https://hacs.xyz/)-distributable Home Assistant custom integration
 for the TP-Link/Tapo **H100** smart hub and its paired child devices
 (**T310**/**T315** temperature & humidity sensors, **S200B** buttons).
 
+If you found this useful, please consider giving this repo a star.
+
 ## Why this exists
 
 Home Assistant's built-in `tplink` integration cannot talk to the H100 on
