@@ -41,6 +41,10 @@ class TapoFeatureEntity(CoordinatorEntity[TapoHubCoordinator], ABC):
     """Base class for an entity backed by a single python-kasa Feature."""
 
     _attr_has_entity_name = True
+    # Platforms override this with their own description class (for example
+    # SensorEntityDescription) so that platform-specific fields such as
+    # state_class exist before _async_update_attrs() has run.
+    _description_class: type[EntityDescription] = EntityDescription
 
     def __init__(
         self,
@@ -57,7 +61,7 @@ class TapoFeatureEntity(CoordinatorEntity[TapoHubCoordinator], ABC):
         self._feature = feature
         self._parent = parent
 
-        self.entity_description = description or EntityDescription(
+        self.entity_description = description or self._description_class(
             key=feature.id,
             translation_key=feature.id,
             entity_category=_entity_category_for_feature(feature),
