@@ -3,7 +3,9 @@
 
 from __future__ import annotations
 
-from homeassistant.components.select import SelectEntity
+from typing import Any
+
+from homeassistant.components.select import SelectEntity, SelectEntityDescription
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from kasa import Feature
@@ -39,6 +41,17 @@ async def async_setup_entry(
 
 class TapoHubSelect(TapoFeatureEntity, SelectEntity):
     """A select entity backed by a choice-based, settable python-kasa feature."""
+
+    _description_class = SelectEntityDescription
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """Initialize the select with its options.
+
+        SelectEntity requires options as soon as the entity is added, before
+        async_added_to_hass() has called _async_update_attrs().
+        """
+        super().__init__(*args, **kwargs)
+        self._attr_options = self._feature.choices or []
 
     @callback
     def _async_update_attrs(self) -> None:

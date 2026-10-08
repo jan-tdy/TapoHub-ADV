@@ -3,7 +3,11 @@
 
 from __future__ import annotations
 
-from homeassistant.components.number import NumberEntity, NumberMode
+from homeassistant.components.number import (
+    NumberEntity,
+    NumberEntityDescription,
+    NumberMode,
+)
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from kasa import Feature
@@ -41,6 +45,7 @@ class TapoHubNumber(TapoFeatureEntity, NumberEntity):
     """A number entity backed by a numeric, settable python-kasa feature."""
 
     _attr_mode = NumberMode.BOX
+    _description_class = NumberEntityDescription
 
     @callback
     def _async_update_attrs(self) -> None:

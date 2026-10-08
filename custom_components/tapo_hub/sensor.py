@@ -8,6 +8,7 @@ from datetime import datetime
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
+    SensorEntityDescription,
     SensorStateClass,
 )
 from homeassistant.const import UnitOfTemperature
@@ -68,6 +69,8 @@ async def async_setup_entry(
 
 class TapoHubSensor(TapoFeatureEntity, SensorEntity):
     """A sensor entity backed by a read-only python-kasa feature."""
+
+    _description_class = SensorEntityDescription
 
     @callback
     def _async_update_attrs(self) -> None:
