@@ -92,7 +92,8 @@ This cuts both ways:
   `tplink` integration now works, and then remove this one again (though
   removing it does **not** automatically restore the official `python-kasa`
   release; the fork stays installed until something else forces a
-  reinstall).
+  reinstall — see [Removing this integration](#removing-this-integration-full-rollback)
+  below for how to do that safely).
 - It also means this integration's "unreleased third-party dependency" risk
   (see above) now applies to every HA integration using `python-kasa`, not
   just this one — if the fork breaks something, it can affect devices this
@@ -131,6 +132,158 @@ other way) under the `tplink` domain and want your long-term statistics
 (e.g. temperature history) to continue, see [MIGRATION.md](MIGRATION.md)
 for the exact steps — this must be done manually and is **not** performed
 automatically by this integration.
+
+The reverse direction — switching *back* to `tplink` once it supports your
+device — is covered in
+[MIGRATION.md § Migrating back to the `tplink` integration](MIGRATION.md#migrating-back-to-the-tplink-integration).
+
+## Removing this integration (full rollback)
+
+Removing the integration itself is quick, but **fully reverting the
+`python-kasa` dependency swap described above is a separate, extra step** —
+skipping it leaves the unofficial fork in place for every integration that
+imports `kasa`, even after this integration is gone. There is currently no
+"friendly uninstaller" for this; it's always a manual checklist.
+
+> Removing everything below does **not** erase Home Assistant's stored
+> history/statistics or your backups — see
+> ["What this does and doesn't undo"](#what-this-does-and-doesnt-undo).
+> It is not literally "as if it was never installed", just fully removed
+> going forward.
+
+### 1. Before you touch anything
+
+- **Create a Home Assistant backup** (Settings → System → Backups → Create
+  backup) before changing anything.
+- **Write down every entity ID** created by this integration that's used in
+  a dashboard or an automation (Settings → Devices & services → Entities,
+  filter by integration "Tapo Hub (H100)"). You'll want these if you later
+  migrate back to `tplink` — see
+  [MIGRATION.md](MIGRATION.md#migrating-back-to-the-tplink-integration).
+
+### 2. Remove the integration's config entries
+
+In **Settings → Devices & services**, open every **Tapo Hub (H100)** entry
+and delete it (⋮ → **Delete**) — do this for the hub *and* for any entry
+created for a child device. Do this **before** removing the integration
+files themselves, otherwise Home Assistant restarts with config entries
+that point at code that no longer exists.
+
+### 3. Remove the integration files
+
+- **Installed via HACS:** open HACS → **Tapo Hub (H100)** → ⋮ → **Remove**.
+- **Installed manually:** delete only the `custom_components/tapo_hub`
+  directory from your config folder. Do not touch any other
+  `custom_components/*` folder — several other integrations (e.g. Tapo
+  vacuum support) also import `kasa` and are unrelated to this integration's
+  files.
+- **Optional:** if you don't plan to reinstall this later, you can also
+  remove the HACS custom repository entry (HACS → **⋮** → **Custom
+  repositories** → remove `jan-tdy/TapoHub-ADV`). This only affects where
+  HACS looks for updates; it has no effect on the installed `python-kasa`
+  package.
+
+Restart Home Assistant once after this step. The integration is now gone,
+but — per the warning earlier in this README — **the `python-kasa` fork is
+still installed system-wide** until you do step 4.
+
+### 4. Restore the official `python-kasa` package
+
+This is the step people usually miss. How you do it depends on how your
+Home Assistant Python environment is managed, because that determines
+*where* the package lives on disk:
+
+- **Home Assistant OS / Supervised:** Home Assistant itself isn't running
+  in a Python virtual environment, so pip-installed requirements for
+  integrations go into the **`deps`** folder inside your config directory
+  (`/config/deps/lib/python3.XX/site-packages/`, where `3.XX` is whatever
+  Python version your HA release ships). Use the **Terminal & SSH** add-on
+  (or an equivalent shell add-on) to reach this path.
+- **Container (official Docker image):** same situation as HAOS — the
+  container's Python is not a venv from Home Assistant's point of view, so
+  requirements also land under `/config/deps/lib/python3.XX/site-packages/`
+  inside the container. Reach it with
+  `docker exec -it <container_name> bash` (or the equivalent
+  `docker compose exec` command for your setup).
+- **Home Assistant Core (legacy manual/venv install):** here Home
+  Assistant *is* running inside a Python virtual environment, so
+  requirements are installed directly into that venv's own
+  `site-packages` (e.g. `/srv/homeassistant/lib/python3.XX/site-packages/`
+  for the common `homeassistant` system-user layout — adjust to wherever
+  you created your venv). Activate that venv
+  (`source /srv/homeassistant/bin/activate`) before running pip commands.
+
+In all three cases, **don't just restart Home Assistant and assume it's
+fixed.** Home Assistant only reinstalls a requirement when it decides the
+currently-installed one doesn't already satisfy the pinned version — and,
+as explained above, the fork reports a version number designed to look
+identical to the official release, so a plain restart typically changes
+nothing.
+
+**Recommended, non-destructive way to force it back:** remove only the
+`kasa` package's own files from that `site-packages` directory — do **not**
+delete the whole `deps` folder or venv `site-packages`, since that also
+holds dependencies for every *other* custom integration you have installed.
+Inside the relevant `site-packages` directory, remove:
+
+- the `kasa/` package directory, and
+- the matching `python_kasa-*.dist-info/` (or `kasa-*.dist-info/`) metadata
+  directory.
+
+Then restart Home Assistant. With the package now absent, Home Assistant
+will reinstall `python-kasa` from whichever manifest(s) in your
+installation declare it as a requirement — normally the built-in `tplink`
+integration — pulling in **the official PyPI release pinned by your
+installed Home Assistant version**, not an arbitrary "latest" version.
+(If you'd rather install it yourself immediately instead of waiting for
+Home Assistant to do it on restart, find the exact pin for your HA version
+in that version's
+[`tplink` integration manifest](https://github.com/home-assistant/core/blob/dev/homeassistant/components/tplink/manifest.json)
+on GitHub — switch the `dev` branch in that URL to your HA release's tag,
+e.g. `2025.x.y` — and `pip install` that exact `python-kasa[speedups]==...`
+string into the same `site-packages` path instead of deleting the old
+files.)
+
+**Verifying it worked (don't trust the version number alone):** the fork
+was built to *report* the same version string as the official release, so
+checking `kasa.__version__` by itself proves nothing. Instead check where
+the installed package actually came from. From a Home Assistant shell
+(Terminal & SSH add-on, `docker exec`, or the activated venv):
+
+```bash
+python3 -c "import kasa; print(kasa.__file__)"
+cat /path/to/site-packages/python_kasa-*.dist-info/direct_url.json
+```
+
+If `direct_url.json` exists and its `url` points at
+`github.com/ZeliardM/python-kasa`, the fork is still what's installed,
+whatever `kasa.__version__` claims. If that file is absent, or it points
+at `pypi.org`/an index rather than a VCS URL, you're on an official,
+PyPI-sourced release.
+
+### What this does and doesn't undo
+
+- **Does not erase history:** entity history/long-term statistics already
+  recorded in Home Assistant's database, and any backups you made, are
+  **not** deleted by removing the integration or its files. This procedure
+  is not equivalent to "never installed" — it's a forward removal, not a
+  restore-to-factory.
+- **May remove TPAP support elsewhere:** per the warning earlier in this
+  README, other integrations (the official `tplink` integration, Tapo
+  vacuum support) may have only worked with your TPAP-era devices as a
+  *side effect* of the fork being installed. Restoring the official
+  `python-kasa` package can make those devices stop working again under
+  those integrations too, until upstream `python-kasa`/`tplink` gain native
+  TPAP support.
+- **Don't** delete the entire `deps`/venv `site-packages` directory, edit
+  `.storage` files by hand, factory-reset your devices, or build an
+  automatic cleanup hook into this integration that swaps dependencies on
+  removal — any of those can break other integrations or your device
+  pairings in ways that are much harder to undo than this checklist.
+
+If you want to keep a single continuous history graph across the switch
+back to `tplink`, see
+[MIGRATION.md § Migrating back to the `tplink` integration](MIGRATION.md#migrating-back-to-the-tplink-integration).
 
 ## Development
 
