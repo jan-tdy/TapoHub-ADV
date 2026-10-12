@@ -57,3 +57,91 @@ entity takes over the old entity_id, the existing graph continues.
 If preserving a single continuous graph isn't important to you, you can
 skip all of the above — just remove the old `tplink` entry and let the new
 `tapo_hub` entities create fresh statistics under their own entity IDs.
+
+## Migrating back to the `tplink` integration
+
+This is the mirror image of the procedure above, for when you want to drop
+this integration and go back to the official `tplink` integration — for
+example once upstream `python-kasa`/`tplink` gain native TPAP support, or
+after confirming you don't need this integration's entities at all (see the
+shared-dependency section in [README.md](README.md)).
+
+> **This assumes `python-kasa` has already been restored to an official
+> release.** Follow
+> [README.md § Removing this integration](README.md#removing-this-integration-full-rollback)
+> first — the `tapo_hub` → `tplink` entity switch below is pointless while
+> the unofficial fork is still what Home Assistant imports as `kasa`.
+
+### 1. Confirm `tplink` actually supports your device now
+
+Don't assume the TPAP gap described in README.md has closed just because
+you restored the official package. After restoring it, go to
+**Settings → Devices & services → + Add integration**, search for
+**"TP-Link Smart Home"**, and try adding the H100 hub. If it fails with the
+same `Unsupported device ... encrypt_scheme ... TPAP` error as before,
+official support still isn't there yet — keep using this integration (or
+reinstall it) rather than ending up with neither working.
+
+### 2. Note down the current (`tapo_hub`) entity IDs
+
+Same idea as the forward migration, in reverse: before removing anything,
+record the `tapo_hub` entity IDs you want history to continue under
+(Settings → Devices & services → Entities, filtered by integration "Tapo
+Hub (H100)").
+
+| Current entity_id (under `tapo_hub`)           | New entity_id (under `tplink`, once added)     |
+|-----------------------------------------------|-----------------------------------------------|
+| `sensor.<tapo_hub_temp_sensor_entity_id>`      | `sensor.<tplink_temp_sensor_entity_id>`        |
+| `sensor.<tapo_hub_humidity_sensor_entity_id>`  | `sensor.<tplink_humidity_sensor_entity_id>`    |
+| `binary_sensor.<tapo_hub_battery_entity_id>`   | `binary_sensor.<tplink_battery_entity_id>`     |
+| `sensor.<tapo_hub_rssi_entity_id>`             | `sensor.<tplink_rssi_entity_id>`               |
+
+### 3. Set up `tplink` for the device, then remove `tapo_hub`
+
+1. Add the H100 under the official `tplink` integration and confirm it
+   works with live data.
+2. Remove this integration's config entries (Settings → Devices & services
+   → the **Tapo Hub (H100)** entries → ⋮ → **Delete**). This frees up the
+   old `tapo_hub` entity IDs.
+3. Only then uninstall the integration files — see
+   [README.md § Removing this integration](README.md#removing-this-integration-full-rollback)
+   for that part.
+
+### 4. Reuse the freed entity IDs where a compatible replacement exists
+
+For each row you noted in step 2, if `tplink` created a *compatible*
+replacement entity (same measurement, same device), go to **Settings →
+Devices & services → Entities**, open the new `tplink` entity, and rename
+its entity ID to the old `tapo_hub` one. As with the forward migration,
+Home Assistant's statistics are keyed by `entity_id`, so the graph
+continues instead of resetting — but only when the replacement entity is
+genuinely equivalent; don't force an entity ID onto an entity measuring
+something different just to keep a graph continuous.
+
+If `tplink` doesn't expose an equivalent entity for something this
+integration had (e.g. a feature not surfaced by the official integration),
+there's nothing to rename it to — that statistic series simply stops
+getting new data, same as any other removed entity.
+
+### 5. Check dashboards and automations
+
+Search your dashboards and automations for the old `tapo_hub.*` entity IDs
+and update anything that wasn't automatically covered by the rename in
+step 4 (automations that reference an entity_id directly are **not**
+automatically updated by renaming — only the entity registry and
+statistics are).
+
+### What "migrating back" does and doesn't give you
+
+- Renaming entity IDs keeps **existing** statistics/history attached to the
+  new entity going forward; it does not retroactively merge two already-
+  separate statistics series, and there's no supported way to splice them
+  together after the fact.
+- Logbook entries, the device registry record, and config entry history
+  referencing `tapo_hub` are not erased just because you removed the
+  integration — only the live entities and their future data move to
+  `tplink`.
+- This procedure does not guarantee you end up in exactly the state you'd
+  be in if this integration had never been installed — see
+  [README.md § What this does and doesn't undo](README.md#what-this-does-and-doesnt-undo)
+  for what is and isn't reverted.
