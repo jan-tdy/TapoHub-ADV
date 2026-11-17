@@ -49,10 +49,8 @@ class TapoHubSwitch(TapoFeatureEntity, SwitchEntity):
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the feature on."""
-        await self._feature.set_value(True)
-        await self.coordinator.async_request_refresh()
+        await self._async_set_feature_value(True)
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the feature off."""
-        await self._feature.set_value(False)
-        await self.coordinator.async_request_refresh()
+        await self._async_set_feature_value(False)

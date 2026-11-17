@@ -52,5 +52,10 @@
         }
       }
     }
+  },
+  "exceptions": {
+    "set_feature_value_failed": {
+      "message": "Failed to set {feature}: {error}"
+    }
   }
 }

@@ -62,5 +62,4 @@ class TapoHubSelect(TapoFeatureEntity, SelectEntity):
 
     async def async_select_option(self, option: str) -> None:
         """Set the feature's value."""
-        await self._feature.set_value(option)
-        await self.coordinator.async_request_refresh()
+        await self._async_set_feature_value(option)
