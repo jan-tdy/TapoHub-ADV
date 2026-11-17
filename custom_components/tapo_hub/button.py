@@ -52,4 +52,4 @@ class TapoHubButton(TapoFeatureEntity, ButtonEntity):
 
     async def async_press(self) -> None:
         """Trigger the feature's action."""
-        await self._feature.set_value(True)
+        await self._async_set_feature_value(True)

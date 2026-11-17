@@ -58,5 +58,4 @@ class TapoHubNumber(TapoFeatureEntity, NumberEntity):
 
     async def async_set_native_value(self, value: float) -> None:
         """Set the feature's value."""
-        await self._feature.set_value(value)
-        await self.coordinator.async_request_refresh()
+        await self._async_set_feature_value(value)

@@ -19,11 +19,12 @@ from typing import Any
 
 from homeassistant.const import EntityCategory
 from homeassistant.core import callback
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import EntityDescription
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from kasa import Device, Feature
+from kasa import Device, Feature, KasaException
 
 from .const import DOMAIN, MANUFACTURER
 from .coordinator import TapoHubCoordinator
@@ -89,6 +90,26 @@ class TapoFeatureEntity(CoordinatorEntity[TapoHubCoordinator], ABC):
         """Populate initial state once added to hass."""
         await super().async_added_to_hass()
         self._async_update_attrs()
+
+    async def _async_set_feature_value(self, value: Any) -> None:
+        """Set the feature's value, translating failures into HomeAssistantError.
+
+        Always requests a coordinator refresh afterwards, including on
+        failure, so the displayed state is reconciled with the device.
+        """
+        try:
+            await self._feature.set_value(value)
+        except KasaException as ex:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="set_feature_value_failed",
+                translation_placeholders={
+                    "feature": self._feature.name,
+                    "error": str(ex),
+                },
+            ) from ex
+        finally:
+            await self.coordinator.async_request_refresh()
 
 
 def _entity_category_for_feature(feature: Feature) -> EntityCategory | None:
