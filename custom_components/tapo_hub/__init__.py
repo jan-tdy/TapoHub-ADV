@@ -63,6 +63,10 @@ async def _async_connect(hass: HomeAssistant, entry: ConfigEntry) -> Device:
                 device = await Device.connect(config=config)
             except AuthenticationError as retry_ex:
                 raise ConfigEntryAuthFailed(str(retry_ex)) from retry_ex
+            except KasaException as retry_ex:
+                raise ConfigEntryNotReady(
+                    f"Unable to connect to {entry.data[CONF_HOST]}: {retry_ex}"
+                ) from retry_ex
         else:
             raise ConfigEntryAuthFailed(str(ex)) from ex
     except KasaException as ex:
