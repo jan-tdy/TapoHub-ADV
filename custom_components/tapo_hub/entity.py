@@ -147,8 +147,20 @@ def iter_feature_entities(
 ) -> list[Any]:
     """Build entities for every not-yet-seen feature of the given type.
 
-    Walks the hub device and all of its currently known children.
+    Walks the hub device and all of its currently known children. Unique IDs
+    belonging to a child that just disappeared are forgotten so that its
+    entities are recreated if the child is later re-paired with the hub.
     """
+    if coordinator.removed_child_ids:
+        stale_prefixes = tuple(
+            f"{device_id}_" for device_id in coordinator.removed_child_ids
+        )
+        known_unique_ids -= {
+            unique_id
+            for unique_id in known_unique_ids
+            if unique_id.startswith(stale_prefixes)
+        }
+
     entities: list[Any] = []
     devices: list[tuple[Device, Device | None]] = [(coordinator.device, None)]
     devices.extend((child, coordinator.device) for child in coordinator.device.children)
