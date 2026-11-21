@@ -79,39 +79,48 @@ async def async_setup_entry(hass: HomeAssistant, entry: TapoHubConfigEntry) -> b
     """Set up Tapo Hub from a config entry."""
     device = await _async_connect(hass, entry)
 
-    if device.credentials_hash and device.credentials_hash != entry.data.get(
-        CONF_CREDENTIALS_HASH
-    ):
-        hass.config_entries.async_update_entry(
-            entry, data={**entry.data, CONF_CREDENTIALS_HASH: device.credentials_hash}
+    try:
+        if device.credentials_hash and device.credentials_hash != entry.data.get(
+            CONF_CREDENTIALS_HASH
+        ):
+            hass.config_entries.async_update_entry(
+                entry, data={**entry.data, CONF_CREDENTIALS_HASH: device.credentials_hash}
+            )
+
+        scan_interval = entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
+        coordinator = TapoHubCoordinator(
+            hass, device, entry, timedelta(seconds=scan_interval)
+        )
+        await coordinator.async_config_entry_first_refresh()
+
+        entry.runtime_data = coordinator
+
+        # Register the hub device before forwarding platforms so that child
+        # device entities can resolve their via_device link.
+        device_registry = dr.async_get(hass)
+        device_registry.async_get_or_create(
+            config_entry_id=entry.entry_id,
+            identifiers={(DOMAIN, device.device_id)},
+            manufacturer=MANUFACTURER,
+            model=device.model,
+            name=device.alias or device.model,
+            sw_version=device.hw_info.get("sw_ver"),
+            hw_version=device.hw_info.get("hw_ver"),
+            connections={(dr.CONNECTION_NETWORK_MAC, device.mac)},
         )
 
-    scan_interval = entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
-    coordinator = TapoHubCoordinator(
-        hass, device, entry, timedelta(seconds=scan_interval)
-    )
-    await coordinator.async_config_entry_first_refresh()
+        await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+        entry.async_on_unload(entry.add_update_listener(_async_update_listener))
 
-    entry.runtime_data = coordinator
-
-    # Register the hub device before forwarding platforms so that child
-    # device entities can resolve their via_device link.
-    device_registry = dr.async_get(hass)
-    device_registry.async_get_or_create(
-        config_entry_id=entry.entry_id,
-        identifiers={(DOMAIN, device.device_id)},
-        manufacturer=MANUFACTURER,
-        model=device.model,
-        name=device.alias or device.model,
-        sw_version=device.hw_info.get("sw_ver"),
-        hw_version=device.hw_info.get("hw_ver"),
-        connections={(dr.CONNECTION_NETWORK_MAC, device.mac)},
-    )
-
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    entry.async_on_unload(entry.add_update_listener(_async_update_listener))
-
-    return True
+        return True
+    except BaseException:
+        # Setup can fail before Home Assistant calls unload; close the hub
+        # connection here so retries do not leak sessions or transports.
+        try:
+            await device.disconnect()
+        except Exception:
+            _LOGGER.exception("Failed to disconnect hub after setup failed")
+        raise
 
 
 async def _async_update_listener(hass: HomeAssistant, entry: TapoHubConfigEntry) -> None:
